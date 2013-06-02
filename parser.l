@@ -1,10 +1,13 @@
 %{
-void FILACOLUMNA();
+  #include "y.tab.h"
+  void FILACOLUMNA();
+  
 %}
 
 %{
 int numFila = 1, numColumna = 1;
 %}
+
 S " "
 EQ {S}*={S}*
 VN 1"."[0-9]+
@@ -18,8 +21,8 @@ PubIDLit "\""({PubIDChar})*"\""|'({PubIDChar})*'
 SYSTLIT (\"([^"\n]*)\")|('([^\'\n]*)')
 ENCNAME [a-zA-Z]([a-zA-Z]|[0-9]|"."|"_"|"-")*
 ENCODNAME "\""({ENCNAME})"\""|'({ENCNAME})'
-CONTENIDO_CDATA (((.)|(\n))[^\]\]>])*	
-ATRIBUTO "accesskey"|"class"|"contenteditable"|"contextmenu"|"dir"|"draggable"|"dropzone"|"hidden"|"id"|"inert"|"itemid"|"itemprop"|"itemref"|"itemscope"|"lang"|"spellocheck"|"style"|"tabindex"|"title"|"translate"|"version"|"xml:lang"|"xmlns"|"xmlns:xsi"|"xsi:schemaLocation"|"http-quiv"|"content"|"name"|"rel"|"media"|"type"|"title"|"charset"|"href"|"hreflang"|"rel"|"rev"|"shape"|"coords"|"target"|"name"|"cite"|"alink"|"background"|bgcolor"|"text"|"vlink"|"aling"|"accept-charset"|"action"|"autocomplete"|"enctype"|"method"|"novalidate"|"profile"|"noshade"|"size"|"width"|"manifest"|"alt"|"border"|"crossorigin"|"height"|"hspace"|"ismap"|"longdesc"|"src"|"usemap"|"vspace"|"autofocus"|"checked"|"disable"|"form"|"formation"|"formenctype"|"formmeter"|"formnovalidate"|"list"|"max"|"maxlength"|"min"|"multiple"|"patron"|"placeholder"|"reado}ly"|"required"|"step"|"value"|"sizes"|"scheme"|"archive"|"classid"|"codebase"|"codetype"|"data"|"declare"|"standby"|"compac"|"type"|"char"|"charoff"|"valign"|abbr"|"axis"|"colspan"|"headers"|"nowrap"|"rowspan"|"label"|"reversed"|"start"|"select"|"async"|"defer"|"xml:space"|"scoped"|"cellpaddinf"|"cellspacing"|"frame"|"rules"|"summary"|"scope"
+CONTENIDO_CDATA (((.)|(\n))[^\]\]>])*
+ATRIBUTO "accesskey"|"class"|"contenteditable"|"contextmenu"|"dir"|"draggable"|"dropzone"|"hidden"|"id"|"inert"|"itemid"|"itemprop"|"itemref"|"itemscope"|"lang"|"spellocheck"|"style"|"tabindex"|"title"|"translate"|"version"|"xml:lang"|"xmlns"|"xmlns:xsi"|"xsi:schemaLocation"|"http-quiv"|"content"|"name"|"rel"|"media"|"type"|"title"|"charset"|"href"|"hreflang"|"rel"|"rev"|"shape"|"coords"|"target"|"name"|"cite"|"alink"|"background"|bgcolor"|"text"|"vlink"|"aling"|"accept-charset"|"action"|"autocomplete"|"enctype"|"method"|"novalidate"|"profile"|"noshade"|"size"|"width"|"manifest"|"alt"|"border"|"crossorigin"|"height"|"hspace"|"ismap"|"longdesc"|"src"|"usemap"|"vspace"|"autofocus"|"checked"|"disable"|"form"|"formation"|"formenctype"|"formmeter"|"formnovalidate"|"list"|"max"|"maxlength"|"min"|"multiple"|"patron"|"placeholder"|"readonly"|"required"|"step"|"value"|"sizes"|"scheme"|"archive"|"classid"|"codebase"|"codetype"|"data"|"declare"|"standby"|"compac"|"type"|"char"|"charoff"|"valign"|abbr"|"axis"|"colspan"|"headers"|"nowrap"|"rowspan"|"label"|"reversed"|"start"|"select"|"async"|"defer"|"xml:space"|"scoped"|"cellpaddinf"|"cellspacing"|"frame"|"rules"|"summary"|"scope"
 TAG "a"|"b"|"blockquote"|"body"|"br"|"button"|"caption"|"code"|"dd"|"dir"|"div"|"dl"|"dt"|"em"|"embed"|"form"|"footer"|"frame"|"h1"|"h2"|"h3"|"h4"|"h5"|"h6"|"head"|"header"|"hr"|"html"|"img"|"input"|"1i"|"link"|"label"|"meta"|"ol"|"object"|"option"|"p"|"pre"|"span"|"summary"|"script"|"select"|"style"|"strong"|"table"|"td"|"textarea"|"th"|"title"|"tr"|"ul"
 
 
@@ -34,65 +37,65 @@ TAG "a"|"b"|"blockquote"|"body"|"br"|"button"|"caption"|"code"|"dd"|"dir"|"div"|
 %x CONTENIDO 
 
 %%
-\n          		        {FILACOLUMNA(); printf(" ENTER\n "); return T_ENTER;} /* los enters valen 00 */
-"<!--"				{FILACOLUMNA(); printf(" t_COMMENT");BEGIN(COMENT); return T_COMMENT_INI;} /* los comentarios valen 02 */
+
+
+"<!--"				{FILACOLUMNA(); yylval.contenido = yytext; BEGIN(COMENT); return T_COMMENT_IN;} /* los comentarios valen 02 */
 <COMENT>{
 "--"				{error();}
 ((.)|(\n))			{FILACOLUMNA();}
-"-->"				{FILACOLUMNA(); BEGIN(INITIAL); return T_COMMENT_END}
-\n                             {FILACOLUMNA(); printf(" ENTER\n ");return T_ENTER;}
+"-->"				{FILACOLUMNA(); yylval.contenido = yytext; BEGIN(INITIAL); return T_COMMENT_END;}
+'\n'                              {FILACOLUMNA();}
 }
 
-"<![CDATA["			{FILACOLUMNA(); printf(" t_cdata_ini "); BEGIN(cDATA); return T_CDATA_I;}
+"<![CDATA["			{FILACOLUMNA(); yylval.contenido = yytext; BEGIN(cDATA); return T_CDATA_I;}
 <cDATA>{
-"]]>"				{FILACOLUMNA(); printf(" t_cdata_fin ");BEGIN(INITIAL);return T_CDATA_F;}
-{CONTENIDO_CDATA}		{FILACOLUMNA(); printf(" Content_data "); return CONT_DATA;}
+"]]>"				{FILACOLUMNA(); yylval.contenido = yytext; BEGIN(INITIAL);return T_CDATA_F;}
+{CONTENIDO_CDATA}		{FILACOLUMNA(); yylval.contenido = yytext; return CONT_DATA;}
 .				{;error();}
 }
    /*------------------------- DEFINICION XMLDec ------------------------------------*/
-"<?xml"				{FILACOLUMNA(); printf(" t_XMLDec "); BEGIN(XMLDec); return T_XMLDEC;}
+ "<?xml"				{FILACOLUMNA(); yylval.contenido = yytext; BEGIN(XMLDec); return T_XMLDEC;}
 <XMLDec>{
-"?>"				{FILACOLUMNA(); printf(" t_fin_XMLDec "); BEGIN(INITIAL);return T_F_XMLDEC;}
-{S}				{FILACOLUMNA(); return T_SPACE;} /* los espacios valen 01*/
-{EQ}				{FILACOLUMNA(); printf(" t_EQ "); return T_EQ; } /* los iguales valen 06 */
+"?>"				{FILACOLUMNA(); yylval.contenido = yytext; BEGIN(INITIAL);return T_F_XMLDEC;}
+{S}				{FILACOLUMNA(); yylval.contenido = yytext; return T_SPACE;} /* los espacios valen 01*/
+ {EQ}				{FILACOLUMNA(); yylval.contenido = yytext; return T_EQ; } /* los iguales valen 06 */
 
-(encoding)			{FILACOLUMNA(); printf(" t_encd "); return T_ENCOD;}
-{ENCODNAME}			{FILACOLUMNA(); printf(" t_endId "); return T_ENDID;}
+ (encoding)			{FILACOLUMNA(); yylval.contenido = yytext; return T_ENCOD;}
+{ENCODNAME}			{FILACOLUMNA(); yylval.contenido = yytext; return T_ENDID;}
   
-(version)			{FILACOLUMNA(); printf(" t_vs "); return T_VS;}
-\"{VN}\"			{FILACOLUMNA(); printf(" t_v_number ");return T_VNUMBER;}
-'{VN}'				{FILACOLUMNA(); printf(" t_v_number ");return T_VNUMBER;}
-\n                             {FILACOLUMNA(); printf(" ENTER\n ");return T_ENTER;}
-.				{;error();}
+(version)			{FILACOLUMNA(); yylval.contenido = yytext; return T_VS;}
+\"{VN}\"			{FILACOLUMNA(); yylval.contenido = yytext; return T_VNUMBER;}
+'{VN}'				{FILACOLUMNA(); yylval.contenido = yytext; return T_VNUMBER;}
+\n                             {FILACOLUMNA();}
+.				{error();}
 
 }
  /* ------------------------------DOCTYPE------------------------------ */
-"<!DOCTYPE"			{FILACOLUMNA(); printf(" t_DocType "); BEGIN(DocType);return T_DOCTYPE;}
+"<!DOCTYPE"			{FILACOLUMNA(); printf(yytext);  BEGIN(DocType); yylval.contenido = yytext; return T_DOCTYPE;}
 <DocType>{
-{S}				{FILACOLUMNA();return T_SPACE;}
-SYSTEM				{FILACOLUMNA();printf(" t_System "); BEGIN (SystLit);return T_SYSTEM;}
-PUBLIC				{FILACOLUMNA();printf(" t_Public "); BEGIN (PubIDLit);return T_PULIC;}
-{NAME}				{FILACOLUMNA();printf(" t_Name "); return T_NAME;}
-">"				{FILACOLUMNA(); printf(" End_Doctype "); BEGIN(INITIAL);return T_ENDDOCTYPE;}
-\n                             {FILACOLUMNA(); printf(" ENTER\n ");return T_ENTER;}
+{S}				{FILACOLUMNA(); yylval.contenido = yytext; return T_SPACE;}
+SYSTEM				{FILACOLUMNA(); yylval.contenido = yytext; BEGIN (SystLit);return T_SYSTEM;}
+PUBLIC				{FILACOLUMNA(); yylval.contenido = yytext; BEGIN (PubIDLit);return T_PULIC;}
+{NAME}				{FILACOLUMNA(); printf("name???"); yylval.contenido = yytext; return T_NAME;}
+">"				{FILACOLUMNA(); yylval.contenido = yytext; BEGIN(INITIAL);return T_ENDDOCTYPE;}
+\n                             {FILACOLUMNA(); printf("andres si jode");}
 .				{FILACOLUMNA();error();}
 }
 
-<PubIDLit>{S}			{FILACOLUMNA();return T_SPACE;}
-<SystLit>{S}			{FILACOLUMNA();return T_SPACE;}
-<PubIDLit>{PubIDLit}		{FILACOLUMNA(); printf(" t_PubIDLit");BEGIN(SystLit);return T_PUBIDLIT;}
-<SystLit>{SYSTLIT}		{FILACOLUMNA(); printf(" t_systlit "); BEGIN(DocType);return T_SYSTLIT;}
-<SystLit>\n                    {FILACOLUMNA(); printf(" ENTER\n ");return T_ENTER;}
+<PubIDLit>{S}			{FILACOLUMNA();yylval.contenido = yytext; return T_SPACE;}
+<SystLit>{S}			{FILACOLUMNA();yylval.contenido = yytext; return T_SPACE;}
+<PubIDLit>{PubIDLit}		{FILACOLUMNA(); yylval.contenido = yytext; BEGIN(SystLit);return T_PUBIDLIT;}
+<SystLit>{SYSTLIT}		{FILACOLUMNA(); yylval.contenido = yytext;  BEGIN(DocType);return T_SYSTLIT;}
+<SystLit>\n                    {FILACOLUMNA();}
 <PubIDLit>.			{;error();}
-<SystLit>.			{;error();}
+<SystLit>.			{;error();} 
 
   /* ----------------------------DEFINICION ETags----------------------*/
-"</"				{FILACOLUMNA(); printf(" t_ETags "); BEGIN(ETags);return T_ETAG;}
+"</"				{FILACOLUMNA(); yylval.contenido = yytext; BEGIN(ETags);return T_ETAG;}
 <ETags>{
-{TAG}				{FILACOLUMNA(); printf(" t_TAG ");return T_TAG;} /* return un tag*/
-{S}				{FILACOLUMNA();return T_SPACE;}
-{S}?">"				{FILACOLUMNA(); printf(" t_fin_ETAG ");BEGIN(INITIAL);return T_FTAG;}
-\n                             {FILACOLUMNA(); printf(" ENTER\n "); return T_ENTER;}
+{TAG}				{FILACOLUMNA(); yylval.contenido = yytext; return T_TAG;}  /* return un tag*/
+{S}				{FILACOLUMNA();yylval.contenido = yytext; return T_SPACE;}
+{S}?">"				{FILACOLUMNA(); yylval.contenido = yytext; BEGIN(INITIAL);return T_FTAG;}
 .				{error();}
 }
  
@@ -100,30 +103,28 @@ PUBLIC				{FILACOLUMNA();printf(" t_Public "); BEGIN (PubIDLit);return T_PULIC;}
   
   /*-----------------------------DEFINICION ESTags-----------------------
    {SCRIPT}			{FILACOLUMNA(); printf(" t_scriptcont ");return T_SCRIPTCONT;}  */
-"<"				{FILACOLUMNA(); printf(" t_ESTags"); BEGIN(ESTags);return T_ESTAG;} 
+
+"<"				{FILACOLUMNA(); yylval.contenido = yytext; BEGIN(ESTags);return T_ESTAG;} 
 <ESTags>{
-{S}				{FILACOLUMNA();{printf(" ");}return T_SPACE;}
-{EQ}				{FILACOLUMNA(); printf(" t_EQ ");return T_EQ;}
-{TAG}				{FILACOLUMNA(); printf(" t_TAG "); return T_TAG;}
-
-{CONTENIDO_ATRIBUTO}		{FILACOLUMNA(); printf(" t_content ");printf(" t_content_end ");return T_CONTENT;}
-{ATRIBUTO}			{FILACOLUMNA(); printf(" t_Atributo ");return T_ATRIBUTO;}
-{S}?"/>"/[" "\n]*"<"		{FILACOLUMNA(); printf(" t_fin_EmTAG ");BEGIN(INITIAL);return T_FIN_ETAG;}
-{S}?">"/[" "\n]*"<"		{FILACOLUMNA(); printf(" t_fin_STAG ");BEGIN(INITIAL);return T_FIN_STAG;}
-{S}?"/>"			{FILACOLUMNA(); printf(" t_fin_EmTAG ");BEGIN(CONTENIDO);return T_FIN_ETAG;}
-{S}?">"				{FILACOLUMNA(); printf(" t_fin_STAG ");BEGIN(CONTENIDO);return T_FIN_STAG;}
-\n                             {FILACOLUMNA(); printf(" ENTER\n ");return T_ENTER;}
+{S}				{FILACOLUMNA(); yylval.contenido = yytext; return T_SPACE;}
+{EQ}				{FILACOLUMNA(); yylval.contenido = yytext; return T_EQ;}
+{TAG}				{FILACOLUMNA(); yylval.contenido = yytext; return T_TAG;}
+{CONTENIDO_ATRIBUTO}		{FILACOLUMNA(); yylval.contenido = yytext; return T_CONTENT;}
+{ATRIBUTO}			{FILACOLUMNA(); yylval.contenido = yytext; return T_ATRIBUTO;}
+{S}?"/>"			{FILACOLUMNA(); yylval.contenido = yytext; BEGIN(INITIAL); return T_FIN_ETAG;}
+{S}?">"				{FILACOLUMNA(); yylval.contenido = yytext; BEGIN(INITIAL);  return T_FIN_STAG;}
 .				{error();}
-} 
+}
+
  /*-----------------------------DEFINICION Contenido-----------------------*/
-<CONTENIDO>"&"			{error();}
-<CONTENIDO>"</"			{FILACOLUMNA(); printf(" t_ETags "); BEGIN(ETags);return T_ETAG;}
-<CONTENIDO>"<"			{FILACOLUMNA(); printf(" t_ESTags"); BEGIN(ESTags);return T_ESTAG;}
+ /*<CONTENIDO>"&"			{error();}
+<CONTENIDO>"</"			{FILACOLUMNA(); yylval.contenido = yytext; BEGIN(ETags);return T_ETAG;}
+<CONTENIDO>"<"			{FILACOLUMNA(); yylval.contenido = yytext; BEGIN(ESTags);return T_ESTAG;}
 <CONTENIDO>"]]>"/[^&<]		{error();}
-<CONTENIDO>[^&<]*		{FILACOLUMNA();printf(" CONTENIDO ");return T_CONTENIDO;}
-
-
-" "				{FILACOLUMNA();return T_SPACE;}
+<CONTENIDO>[^&<]*		{FILACOLUMNA(); yylval.contenido = yytext; return T_CONTENIDO;}*/
+[^&" "'\n'<]*			{FILACOLUMNA(); printf(yytext); yylval.contenido = yytext; return T_CONTENIDO;}
+" "				{FILACOLUMNA(); yylval.contenido = yytext; return T_SPACE;}
+[\n]          		        {FILACOLUMNA();} /* los enters valen 00 */
 %%
 
 void FILACOLUMNA()
@@ -146,3 +147,4 @@ int error(void)
     exit(1);
     
 }
+
