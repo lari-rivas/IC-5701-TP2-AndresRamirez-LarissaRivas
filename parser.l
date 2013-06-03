@@ -40,7 +40,7 @@ TAG "a"|"b"|"blockquote"|"body"|"br"|"button"|"caption"|"code"|"dd"|"dir"|"div"|
 %%
 
 
-"<!--"				{FILACOLUMNA(); yylval.contenido = yytext; BEGIN(COMENT); return T_COMMENT_IN;} /* los comentarios valen 02 */
+"<!--"				{FILACOLUMNA(); yylval.contenido = "<!--"; BEGIN(COMENT); return T_COMMENT_IN;} /* los comentarios valen 02 */
 <COMENT>{
 "--"				{error();}
 ((.)|(\n))			{FILACOLUMNA();}
@@ -48,14 +48,14 @@ TAG "a"|"b"|"blockquote"|"body"|"br"|"button"|"caption"|"code"|"dd"|"dir"|"div"|
 '\n'                              {FILACOLUMNA();}
 }
 
-"<![CDATA["			{FILACOLUMNA(); yylval.contenido = yytext; BEGIN(cDATA); return T_CDATA_I;}
+"<![CDATA["			{FILACOLUMNA(); yylval.contenido = "<![CDATA["; BEGIN(cDATA); return T_CDATA_I;}
 <cDATA>{
 "]]>"				{FILACOLUMNA(); yylval.contenido = yytext; BEGIN(INITIAL);return T_CDATA_F;}
 {CONTENIDO_CDATA}		{FILACOLUMNA(); yylval.contenido = yytext; return CONT_DATA;}
 .				{;error();}
 }
    /*------------------------- DEFINICION XMLDec ------------------------------------*/
- "<?xml"				{FILACOLUMNA(); yylval.contenido = yytext; BEGIN(XMLDec); return T_XMLDEC;}
+ "<?xml"				{FILACOLUMNA(); yylval.contenido = "<?xml"; BEGIN(XMLDec); return T_XMLDEC;}
 <XMLDec>{
 "?>"				{FILACOLUMNA(); yylval.contenido = yytext; BEGIN(INITIAL);return T_F_XMLDEC;}
 {S}				{FILACOLUMNA(); yylval.contenido = yytext; return T_SPACE;} /* los espacios valen 01*/
@@ -72,7 +72,7 @@ TAG "a"|"b"|"blockquote"|"body"|"br"|"button"|"caption"|"code"|"dd"|"dir"|"div"|
 
 }
  /* ------------------------------DOCTYPE------------------------------ */
-"<!DOCTYPE"			{FILACOLUMNA();  BEGIN(DocType); yylval.contenido = yytext; return T_DOCTYPE;}
+"<!DOCTYPE"			{FILACOLUMNA();  BEGIN(DocType); yylval.contenido = "<!DOCTYPE"; return T_DOCTYPE;}
 <DocType>{
 {S}				{FILACOLUMNA(); yylval.contenido = yytext; return T_SPACE;}
 SYSTEM				{FILACOLUMNA(); yylval.contenido = yytext; BEGIN (SystLit);return T_SYSTEM;}
@@ -92,7 +92,7 @@ PUBLIC				{FILACOLUMNA(); yylval.contenido = yytext; BEGIN (PubIDLit);return T_P
 <SystLit>.			{;error();} 
 
   /* ----------------------------DEFINICION ETags----------------------*/
-"</"				{FILACOLUMNA(); yylval.contenido = yytext; BEGIN(ETags);return T_ETAG;}
+"</"				{FILACOLUMNA(); yylval.contenido = "</"; BEGIN(ETags);return T_ETAG;}
 <ETags>{
 {TAG}				{FILACOLUMNA(); yylval.contenido = yytext; return T_TAG;}  /* return un tag*/
 {S}				{FILACOLUMNA();yylval.contenido = yytext; return T_SPACE;}
@@ -105,7 +105,7 @@ PUBLIC				{FILACOLUMNA(); yylval.contenido = yytext; BEGIN (PubIDLit);return T_P
   /*-----------------------------DEFINICION ESTags-----------------------
    {SCRIPT}			{FILACOLUMNA(); printf(" t_scriptcont ");return T_SCRIPTCONT;}  */
 
-"<"				{FILACOLUMNA(); yylval.contenido = yytext; BEGIN(ESTags);return T_ESTAG;} 
+"<"				{FILACOLUMNA(); yylval.contenido = "<"; BEGIN(ESTags);return T_ESTAG;} 
 <ESTags>{
 {S}				{FILACOLUMNA(); yylval.contenido = yytext; return T_SPACE;}
 {EQ}				{FILACOLUMNA(); yylval.contenido = yytext; return T_EQ;}

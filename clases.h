@@ -29,7 +29,15 @@ nodo *crear_padre(char *tiponodo){
 void imprimir_margin (int margin, nodo *arbol){
   int i;
   for (i=0; i < margin; i++) printf("-");
-  printf(" %s \n", arbol->tipo);
+  if(arbol->content == NULL){
+    printf(" %s \n", arbol->tipo);
+  }
+  else
+  {
+    printf(" %s : %s \n", arbol->tipo, arbol->content);
+  }
+  
+  
 }
 
 
@@ -53,4 +61,16 @@ void imprimir_aux(int margin, nodo *arbol){
 void imprimir (nodo *arbol){
   int margin =0;
   imprimir_aux(margin, arbol); 
+}
+
+//  FUNCION PARA ENCONTRAR EL ULTIMO EN LOS RECURSIVOS
+nodo *encontrar_ultimo (nodo *nodo){
+  if(nodo->hermano == NULL)
+  {
+    return nodo;
+  }
+  else
+  {
+    encontrar_ultimo(nodo->hermano);
+  }
 }

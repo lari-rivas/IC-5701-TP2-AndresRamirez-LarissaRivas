@@ -32,7 +32,7 @@
 %%
 
     
-Document : Prolog T_S Element 				{printf("document!!  "); 
+Document : Prolog T_S Element 				{
 								 nodo* padre = crear_padre("Document");
 								 $1->hermano = $2;
 								 $2->hermano=$3;
@@ -54,16 +54,19 @@ Element : EETAG 						{
 
 SCTAG : ESTAG CONTENT ETAG 					{ 
 								  nodo* padre = crear_padre("SCTAG");
-								  $1->hermano=$2;
-								  $2->hermano=$3;
+								  nodo* nodo2 = crear_padre("CONTENT");
+								  nodo2->hijo = $2;
+								  $1->hermano=nodo2;
+								  nodo2->hermano=$3;
 								  padre->hijo=$1;
 								  $$=padre;}
       ;
       
-CONTENT : CONTENT OPCIONES 					{nodo* padre = crear_padre("CONTENT");
-								 $1->hermano=$2;
-								 padre->hijo=$1;
-								 $$=padre;}
+CONTENT : CONTENT OPCIONES 					{								 
+								 nodo* ultimo = encontrar_ultimo($1);
+								 ultimo->hermano = $2;
+								 $$ = $1;
+								 }
 	|							{nodo* nodo_padre = crear_padre ("vacio");
 								$$ = nodo_padre;}
 	;
@@ -86,27 +89,31 @@ OPCIONES : T_COMMENT    					{nodo* padre = crear_padre("OPCIONES");
 ESTAG :T_ESTAG T_TAG T_ATRIB T_S T_FIN_STAG   			{
 								 nodo* nodo1 = crear_nodo("T_ESTAG", $1);
 								 nodo* nodo2 = crear_nodo("T_TAG", $2);
+								 nodo* nodo3 = crear_padre("T_ATRIB");
 								 nodo* nodo5 = crear_nodo("T_FIN_STAG", $5);
 								 nodo* padre = crear_padre("ESTAG");
+								 nodo3->hijo = $3;
 								 nodo1->hermano=nodo2;
-								 nodo2->hermano=$3;
-								 $3->hermano=$4;
+								 nodo2->hermano=nodo3;
+								 nodo3->hermano=$4;
 								 $4->hermano=nodo5;
 								 padre->hijo=nodo1;
 								 $$=padre;}
       ;
-      
+       
 EETAG : T_ESTAG T_TAG T_ATRIB T_S T_FIN_ETAG 			{
 								nodo* nodo1 = crear_nodo("T_ESTAG", $1);
 								nodo* nodo2 = crear_nodo("T_TAG", $2);
+								nodo* nodo3 = crear_padre("T_ATRIB");
 								nodo* nodo5 = crear_nodo("T_FIN_ETAG", $5);
 								nodo* padre = crear_padre("EETAG");
-								nodo1->hermano=nodo2;
-								nodo2->hermano=$3;
-								$3->hermano = $4;
+	 							nodo3->hijo = $3;
+								nodo1->hermano=nodo2;								
+								nodo2->hermano=nodo3;
+								nodo3->hermano = $4;
 								$4->hermano = nodo5;
 								padre->hijo=nodo1;
-								$$=padre;} 
+								$$=padre;}  
       ;
 
 T_ATRIB : 							{ 
@@ -115,14 +122,15 @@ T_ATRIB : 							{
 	| T_ATRIB T_SS T_ATRIBUTO T_EQ T_CONTENT 		{
 								 nodo* nodo3 = crear_nodo("T_Atributo", $3);
 								 nodo* nodo4 = crear_nodo("T_EQ", "=");
-								 nodo* nodo5 = crear_nodo("T_CONTENT", $5);
-								 nodo* padre = crear_padre("T_ATRIB");
-								 $1->hermano=$2;
-								 $2->hermano=nodo3;
+								 nodo* nodo5 = crear_nodo("T_CONTENT", $5);								 
+								 
+								 $2->hermano = nodo3;
 								 nodo3->hermano=nodo4;
 								 nodo4->hermano=nodo5;
-								 padre->hijo=$1;
-								 $$=padre;}	
+								 nodo *ultimo = encontrar_ultimo($1);
+								 ultimo->hermano = $2;
+								 
+								 $$=$1;}	
 	; 
 
 Prolog : XMLdec Misc Doctype 					{
@@ -227,7 +235,7 @@ XMLdec_E : T_XMLDEC VersionINfo EncoDecl T_S T_F_XMLDEC 	{nodo* nodo1 = crear_no
 								 $4 -> hermano = nodo5;
 								 padre->hijo = nodo1;
 								 $$ = padre;}
-	  | T_XMLDEC VersionINfo T_S T_F_XMLDEC 		{nodo* nodo1 = crear_nodo("T_XMLDEC", $1);
+	  | T_XMLDEC VersionINfo T_S T_F_XMLDEC 		{ nodo* nodo1 = crear_nodo("T_XMLDEC", $1);
 								 nodo* nodo4 = crear_nodo("T_F_XMLDEC", $4);
 								 nodo* padre = crear_padre("XMLdec_E");
 								 nodo1->hermano = $2;
