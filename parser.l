@@ -1,5 +1,6 @@
 %{
   #include "y.tab.h"
+  
   void FILACOLUMNA();
   
 %}
@@ -71,14 +72,14 @@ TAG "a"|"b"|"blockquote"|"body"|"br"|"button"|"caption"|"code"|"dd"|"dir"|"div"|
 
 }
  /* ------------------------------DOCTYPE------------------------------ */
-"<!DOCTYPE"			{FILACOLUMNA(); printf(yytext);  BEGIN(DocType); yylval.contenido = yytext; return T_DOCTYPE;}
+"<!DOCTYPE"			{FILACOLUMNA();  BEGIN(DocType); yylval.contenido = yytext; return T_DOCTYPE;}
 <DocType>{
 {S}				{FILACOLUMNA(); yylval.contenido = yytext; return T_SPACE;}
 SYSTEM				{FILACOLUMNA(); yylval.contenido = yytext; BEGIN (SystLit);return T_SYSTEM;}
 PUBLIC				{FILACOLUMNA(); yylval.contenido = yytext; BEGIN (PubIDLit);return T_PULIC;}
-{NAME}				{FILACOLUMNA(); printf("name???"); yylval.contenido = yytext; return T_NAME;}
+{NAME}				{FILACOLUMNA();  yylval.contenido = yytext; return T_NAME;}
 ">"				{FILACOLUMNA(); yylval.contenido = yytext; BEGIN(INITIAL);return T_ENDDOCTYPE;}
-\n                             {FILACOLUMNA(); printf("andres si jode");}
+\n                             {FILACOLUMNA(); }
 .				{FILACOLUMNA();error();}
 }
 
@@ -122,7 +123,7 @@ PUBLIC				{FILACOLUMNA(); yylval.contenido = yytext; BEGIN (PubIDLit);return T_P
 <CONTENIDO>"<"			{FILACOLUMNA(); yylval.contenido = yytext; BEGIN(ESTags);return T_ESTAG;}
 <CONTENIDO>"]]>"/[^&<]		{error();}
 <CONTENIDO>[^&<]*		{FILACOLUMNA(); yylval.contenido = yytext; return T_CONTENIDO;}*/
-[^&" "'\n'<]*			{FILACOLUMNA(); printf(yytext); yylval.contenido = yytext; return T_CONTENIDO;}
+[^&" "'\n'<]*			{FILACOLUMNA();  yylval.contenido = yytext; return T_CONTENIDO;}
 " "				{FILACOLUMNA(); yylval.contenido = yytext; return T_SPACE;}
 [\n]          		        {FILACOLUMNA();} /* los enters valen 00 */
 %%
@@ -147,4 +148,3 @@ int error(void)
     exit(1);
     
 }
-
