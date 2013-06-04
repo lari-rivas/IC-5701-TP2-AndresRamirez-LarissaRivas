@@ -1,17 +1,19 @@
-%{
+%{ 
   #include <stdio.h>
   #include <assert.h>
-  #include "clases.h"
-  
-  
+  #include "clases.h"   /* contiene las estructuras y metodos de las funciones que se utilizan para construir el arbol e imprimirlo en consola */
   void yyerror (char const *s);
 %}
+  //se incluye location para el uso de la variable yylloc
+%locations  
 
+/*  redefine el valor la varible de yylval permitiendole poseer 2 tipos de contenido, un puntero char  o un struct de tipo nodo que esta en clases.h */
 %union{
   char *contenido;
   struct Nodo *node;
 }
- /* modifica la variable yylval para obtener los tipos requeridos.*/
+
+ /* redefinen los tokens terminales de la gramatica definiendolos como tipos de punteros a char */
 
 %token <contenido> T_ENTER T_SPACE
 %token <contenido> T_COMMENT_IN T_COMMENT_END
@@ -20,26 +22,30 @@
 %token <contenido> T_DOCTYPE T_SYSTEM T_PULIC T_NAME T_ENDDOCTYPE T_PUBIDLIT T_SYSTLIT
 %token <contenido> T_ETAG T_TAG T_FTAG
 %token <contenido> T_ESTAG T_CONTENT T_ATRIBUTO T_FIN_ETAG T_FIN_STAG
-/*T_ESTAG*/
-
 %token <contenido>  T_CONTENIDO
 
-%left T_TAG T_ESTAG T_COMMENT_IN T_SPACE
-
+/*   define los no terminales como punteros de struct de nodo, que permiten tenerles difentes datos almacenados.  
+    Estos no terminales son definidos en la gramatica y que aparecen todos del lado izquierdo seguido de dos puntos. */
 %type <node> Prolog Element CONTENT OPCIONES SCTAG ESTAG EETAG T_ATRIB Misc OPCIONESMisc T_COMMENT T_S T_SS Doctype ExternalID_E XMLdec XMLdec_E VersionINfo EncoDecl ETAG
 
+/*   Implementacion de asociatividad por la izquierda para eliminar problemas en la gramatica como reduce reduce, o shit-reduce */
+%left T_TAG T_ESTAG T_COMMENT_IN T_SPACE
 
 %%
 
+/*  las reglas gramaticales que reciben un token por parte del scanner e intenta acomodarlo en alguna que encaje
+    aparecen de mas general a mas especifico para que se puedan llamar a no terminales que esten debajo de las creadas.
     
+    la gramatica de comienzo es el Document  como punto inicial de construccion
+    cada terminal o no terminal es un struct nodo que se encuentra en el clases.h que son llamados a traves de sus funciones*/
 Document : Prolog T_S Element 				{
-								 nodo* padre = crear_padre("Document");
+								 nodo* padre = crear_padre("Document"); /*se concluye con la construccion del arbol y la gramatica*/
 								 $1->hermano = $2;
 								 $2->hermano=$3;
 								 padre->hijo=$1;
 								 printf("\n");
-								 imprimir(padre);
-								 }
+								 imprimir(padre); /*se invoca al metodo imprimir para mostrar en consola el arbol construido*/
+								 }	
 	  ;   
     
 Element : EETAG 						{
@@ -59,7 +65,7 @@ SCTAG : ESTAG CONTENT ETAG 					{
 								  $1->hermano=nodo2;
 								  nodo2->hermano=$3;
 								  padre->hijo=$1;
-								  $$=padre;}
+								  $$=padre;}	
       ;
       
 CONTENT : CONTENT OPCIONES 					{								 
@@ -87,8 +93,9 @@ OPCIONES : T_COMMENT    					{nodo* padre = crear_padre("OPCIONES");
 	 ;
 
 ESTAG :T_ESTAG T_TAG T_ATRIB T_S T_FIN_STAG   			{
-								 nodo* nodo1 = crear_nodo("T_ESTAG", $1);
+								 nodo* nodo1 = crear_nodo("T_ESTAG", $1); 								  
 								 nodo* nodo2 = crear_nodo("T_TAG", $2);
+								 
 								 nodo* nodo3 = crear_padre("T_ATRIB");
 								 nodo* nodo5 = crear_nodo("T_FIN_STAG", $5);
 								 nodo* padre = crear_padre("ESTAG");
@@ -99,11 +106,12 @@ ESTAG :T_ESTAG T_TAG T_ATRIB T_S T_FIN_STAG   			{
 								 $4->hermano=nodo5;
 								 padre->hijo=nodo1;
 								 $$=padre;}
+     
       ;
        
 EETAG : T_ESTAG T_TAG T_ATRIB T_S T_FIN_ETAG 			{
 								nodo* nodo1 = crear_nodo("T_ESTAG", $1);
-								nodo* nodo2 = crear_nodo("T_TAG", $2);
+								nodo* nodo2 = crear_nodo("T_TAG", $2);								
 								nodo* nodo3 = crear_padre("T_ATRIB");
 								nodo* nodo5 = crear_nodo("T_FIN_ETAG", $5);
 								nodo* padre = crear_padre("EETAG");
@@ -113,7 +121,8 @@ EETAG : T_ESTAG T_TAG T_ATRIB T_S T_FIN_ETAG 			{
 								nodo3->hermano = $4;
 								$4->hermano = nodo5;
 								padre->hijo=nodo1;
-								$$=padre;}  
+								$$=padre;}
+	
       ;
 
 T_ATRIB : 							{ 
@@ -121,16 +130,16 @@ T_ATRIB : 							{
 								$$ = nodo_padre;}
 	| T_ATRIB T_SS T_ATRIBUTO T_EQ T_CONTENT 		{
 								 nodo* nodo3 = crear_nodo("T_Atributo", $3);
-								 nodo* nodo4 = crear_nodo("T_EQ", "=");
+								 nodo* nodo4 = crear_nodo("T_EQ", "=");								 
 								 nodo* nodo5 = crear_nodo("T_CONTENT", $5);								 
-								 
 								 $2->hermano = nodo3;
 								 nodo3->hermano=nodo4;
 								 nodo4->hermano=nodo5;
 								 nodo *ultimo = encontrar_ultimo($1);
 								 ultimo->hermano = $2;
 								 
-								 $$=$1;}	
+								 $$=$1;}
+	
 	; 
 
 Prolog : XMLdec Misc Doctype 					{
@@ -140,7 +149,7 @@ Prolog : XMLdec Misc Doctype 					{
 								padre->hijo=$1;
 								$$=padre;
 								}	
-
+	
        ;
        
        
@@ -166,7 +175,7 @@ OPCIONESMisc: T_COMMENT 					{
 	    ;
      
     
-Doctype : T_DOCTYPE T_SS T_NAME ExternalID_E T_S T_ENDDOCTYPE 	{
+Doctype : T_DOCTYPE T_SS T_NAME ExternalID_E T_S T_ENDDOCTYPE 	{								 
 								 nodo* nodo1 = crear_nodo("T_DOCTYPE",$1);
 								 nodo* nodo3 = crear_nodo("T_NAME", $3);
 								 nodo* nodo6 = crear_nodo("T_ENDOCTYPE", $6);
@@ -178,7 +187,7 @@ Doctype : T_DOCTYPE T_SS T_NAME ExternalID_E T_S T_ENDDOCTYPE 	{
 								 $5->hermano=nodo6;
 								 padre->hijo=nodo1;
 								 $$=padre;}
-	| T_DOCTYPE T_SS T_NAME T_S T_ENDDOCTYPE 		{
+	| T_DOCTYPE T_SS T_NAME T_S T_ENDDOCTYPE 		{   								  
 								 nodo* nodo1 = crear_nodo("T_DOCTYPE",$1);
 								 nodo* nodo3 = crear_nodo("T_NAME", $3);
 								 nodo* nodo5 = crear_nodo("T_ENDOCTYPE", $5);
@@ -188,7 +197,8 @@ Doctype : T_DOCTYPE T_SS T_NAME ExternalID_E T_S T_ENDDOCTYPE 	{
 								 nodo3->hermano=$4;
 								 $4->hermano=nodo5;
 								 padre->hijo=nodo1;
-								 $$=padre;}
+								 $$=padre;}		
+	
 	; 
 
 
@@ -202,7 +212,7 @@ ExternalID_E : T_SS T_SYSTEM T_SS T_SYSTLIT 			{
 								padre->hijo=$1;
 								$$=padre;
 								}
-	     |T_SS T_PULIC T_SS T_PUBIDLIT T_S T_SYSTLIT	{
+	     |T_SS T_PULIC T_SS T_PUBIDLIT T_S T_SYSTLIT	{ 
 								nodo* nodo2 = crear_nodo("T_PUBLIC", $2);
 								nodo* nodo4 = crear_nodo("T_PUBIDLIT", $4);
 								nodo* nodo6 = crear_nodo("T_SYSTLIT", $6);
@@ -213,7 +223,8 @@ ExternalID_E : T_SS T_SYSTEM T_SS T_SYSTLIT 			{
 								nodo4->hermano = $5;
 								$5->hermano = nodo6;
 								padre->hijo=$1;
-								$$=padre;}	      
+								$$=padre;}
+	
 	     ;
     
     
@@ -243,11 +254,12 @@ XMLdec_E : T_XMLDEC VersionINfo EncoDecl T_S T_F_XMLDEC 	{nodo* nodo1 = crear_no
 								 $3 -> hermano = nodo4;
 								 padre->hijo = nodo1;
 								 $$ = padre;}
+	
 	  ;
 
 
 
-VersionINfo : T_SS T_VS T_EQ T_VNUMBER 				{
+VersionINfo : T_SS T_VS T_EQ T_VNUMBER 				{								
 								nodo* nodo2 = crear_nodo("Version", $2);
 								nodo* nodo3 = crear_nodo("EQ", "=");
 								nodo* nodo4 = crear_nodo("NumVersion", $4);
@@ -257,7 +269,7 @@ VersionINfo : T_SS T_VS T_EQ T_VNUMBER 				{
 								nodo3->hermano = nodo4;
 								padre->hijo = $1;
 								$$ = padre;
-								}
+								}		
 	    ;
 
 
@@ -272,6 +284,7 @@ EncoDecl : T_SS T_ENCOD T_EQ T_ENDID 				{
 								 nodo3->hermano = nodo4;
 								 padre->hijo=$1;
 								 $$ = padre;}
+	
 	 ; 
 
 
@@ -287,6 +300,7 @@ ETAG : T_ETAG T_TAG T_S T_FTAG 					{
 								  padre->hijo=nodo1;
 								  $$ = padre;
 								}
+	
      ; 
 
      
@@ -303,12 +317,12 @@ T_COMMENT : T_COMMENT_IN T_COMMENT_END 				{ nodo* nodo1 = crear_nodo("comentari
 
 T_SS : T_SPACE  						{ 
 								nodo* nodo_padre = crear_padre("T_SS");
-								nodo* nodo1 = crear_nodo("T_SPACE", $1);
+								nodo* nodo1 = crear_nodo("T_SPACE", " ");
 								nodo_padre->hijo=nodo1;
 								$$ = nodo_padre;}
      |  T_SPACE T_SS 						{  
 								nodo* nodo_padre = crear_padre("T_SS");
-								nodo* nodo1 = crear_nodo("T_SPACE", $1);
+								nodo* nodo1 = crear_nodo("T_SPACE", " ");
 								nodo1->hermano = $2;
 								nodo_padre->hijo=nodo1;
 								$$ = nodo_padre; }
@@ -318,7 +332,7 @@ T_SS : T_SPACE  						{
 
 T_S : T_SPACE T_S 						{ 
 								nodo* nodo_padre = crear_padre("T_S");
-								nodo* nodo1 = crear_nodo("T_SPACE", $1);
+								nodo* nodo1 = crear_nodo("T_SPACE", " ");
 								nodo1->hermano = $2;
 								nodo_padre->hijo=nodo1;
 								$$ = nodo_padre; }
@@ -331,10 +345,15 @@ T_S : T_SPACE T_S 						{
 
 %%
 
+/*  funcion de error que cuando se intenta hacer un elemento que no este correcto se llama a yyerror con un puntero que indicara el tipo de error presentado, 
+    ademas imprime  el numero de linea y columna donde se encuentra el error, que son variables del yylloc */
 void yyerror (char const *s)
      {
-       fprintf (stderr, "%s\n", s);
+       fprintf (stderr, "ERROR EN POSICION: %d, %d: %s\n", yylloc.first_line, yylloc.first_column, s);
      }
+     
+/*      la funcion main se encarga de llamar el yyparse el cual se encarga de llamar a su vez al scanner y comienza a pedir tokens
+	los cuales son procesados en la gramatica. la funcion termina cuando el scanner no le envie mas tokens*/
 
 int main() {
 	return yyparse();
